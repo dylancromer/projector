@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.integrate as integrate
-import cubature
 
 
 def _first_term_integrand_func(xs, radii, density_func):
