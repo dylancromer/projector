@@ -16,4 +16,4 @@ def describe_esd():
         rho_func = lambda r: 1/r
         esds = projector.esd(radii, rho_func)
 
-        assert np.allclose(esds, np.ones(radii.shape), rtol=1e-3)
+        assert np.allclose(esds, np.ones(radii.shape), rtol=1e-4)
