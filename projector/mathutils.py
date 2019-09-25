@@ -7,7 +7,7 @@ def atleast_kd(array, k):
     return array.reshape(new_shape)
 
 
-def _trapz(arr, axis, dx=None):
+def trapz_(arr, axis, dx=None):
     arr = np.moveaxis(arr, axis, 0)
 
     if dx is None:
