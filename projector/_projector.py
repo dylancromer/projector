@@ -22,7 +22,22 @@ def _second_term_integrand_func_x(xs, radii, density_func):
 
 
 def esd(radii, density_func, num_points=100):
-    xs = np.stack((np.linspace(1e-6, radius, num_points) for radius in radii))
+    xs = np.stack(tuple(np.linspace(1e-6, radius, num_points) for radius in radii))
+    first_term_integrand = _first_term_integrand_func(xs, radii, density_func)
+
+    dxs = mathutils.atleast_kd(np.gradient(xs, axis=-1), first_term_integrand.ndim, append_dims=False)
+    first_term = mathutils.trapz_(first_term_integrand, axis=-1, dx=dxs)
+
+    thetas = np.linspace(0, np.pi/2, num_points)
+    dthetas = np.gradient(thetas, axis=-1)
+    second_term_integrand = _second_term_integrand_func_theta(thetas, radii, density_func)
+    second_term = mathutils.trapz_(second_term_integrand, axis=-1, dx=dthetas)
+
+    return first_term - second_term
+
+
+def _esd_ang_coords(radii, density_func, num_points=100):
+    xs = np.stack(tuple(np.linspace(1e-6, radius, num_points) for radius in radii))
     first_term_integrand = _first_term_integrand_func(xs, radii, density_func)
 
     dxs = mathutils.atleast_kd(np.gradient(xs, axis=-1), first_term_integrand.ndim, append_dims=False)
@@ -32,5 +47,20 @@ def esd(radii, density_func, num_points=100):
     dthetas = np.gradient(thetas, axis=-1).T
     second_term_integrand = _second_term_integrand_func_theta(thetas, radii, density_func)
     second_term = mathutils.trapz_(second_term_integrand, axis=-1, dx=dthetas)
+
+    return first_term - second_term
+
+
+def _esd_los_coords(radii, density_func, num_points=100):
+    xs = np.stack(tuple(np.linspace(1e-6, radius, num_points) for radius in radii))
+    first_term_integrand = _first_term_integrand_func(xs, radii, density_func)
+
+    dxs = mathutils.atleast_kd(np.gradient(xs, axis=-1), first_term_integrand.ndim, append_dims=False)
+    first_term = mathutils.trapz_(first_term_integrand, axis=-1, dx=dxs)
+
+    ys = np.stack(tuple(np.linspace(radius+1e-8, 1e2*radius, num_points) for radius in radii))
+    dys = mathutils.atleast_kd(np.gradient(ys, axis=-1), first_term_integrand.ndim, append_dims=False)
+    second_term_integrand = _second_term_integrand_func_x(ys, radii, density_func)
+    second_term = mathutils.trapz_(second_term_integrand, axis=-1, dx=dys)
 
     return first_term - second_term
