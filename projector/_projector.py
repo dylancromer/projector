@@ -4,7 +4,10 @@ import projector.mathutils as mathutils
 
 
 def _first_term_integrand_func(xs, radii, density_func):
-    return 4 * density_func(xs) * xs**2 / mathutils.atleast_kd(radii, xs.ndim)**2
+    rhos = density_func(xs)
+    postfactor = xs**2 / mathutils.atleast_kd(radii, xs.ndim)**2
+    postfactor = mathutils.atleast_kd(postfactor, rhos.ndim, append_dims=False)
+    return 4 * rhos * postfactor
 
 
 def _second_term_integrand_func_theta(thetas, radii, density_func):
@@ -20,8 +23,9 @@ def _second_term_integrand_func_x(xs, radii, density_func):
 
 def esd(radii, density_func, num_points=100):
     xs = np.stack((np.linspace(1e-6, radius, num_points) for radius in radii))
-    dxs = np.gradient(xs, axis=-1).T
     first_term_integrand = _first_term_integrand_func(xs, radii, density_func)
+
+    dxs = mathutils.atleast_kd(np.gradient(xs, axis=-1), first_term_integrand.ndim, append_dims=False)
     first_term = mathutils.trapz_(first_term_integrand, axis=-1, dx=dxs)
 
     thetas = np.linspace(0, np.pi/2, num_points)

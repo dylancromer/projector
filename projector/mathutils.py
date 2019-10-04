@@ -1,9 +1,14 @@
 import numpy as np
 
 
-def atleast_kd(array, k):
+def atleast_kd(array, k, append_dims=True):
     array = np.asarray(array)
-    new_shape = array.shape + (1,) * (k - array.ndim)
+
+    if append_dims:
+        new_shape = array.shape + (1,) * (k-array.ndim)
+    else:
+        new_shape = (1,) * (k-array.ndim) + array.shape
+
     return array.reshape(new_shape)
 
 
@@ -12,6 +17,7 @@ def trapz_(arr, axis, dx=None):
 
     if dx is None:
         dx = np.ones(arr.shape[0])
+    dx = np.moveaxis(dx, axis, 0)
     dx = atleast_kd(dx, arr.ndim)
 
     arr = dx*arr
