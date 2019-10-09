@@ -1,25 +1,13 @@
 import numpy as np
 
 
-class NoInsertionAxis():
-    pass
-
-
-def atleast_kd(array, k, insertion_axis=NoInsertionAxis()):
+def atleast_kd(array, k, append_dims=True):
     array = np.asarray(array)
 
-    if isinstance(insertion_axis, NoInsertionAxis):
-        insertion_axis = array.ndim
-
-    new_shape = array.shape[:insertion_axis] + (1,)*(k-array.ndim) + array.shape[insertion_axis:]
-
-    return array.reshape(new_shape)
-
-
-def extend_shape(array, k_before, k_after):
-    array = np.asarray(array)
-
-    new_shape = k_before*(1,) + array.shape + k_after*(1,)
+    if append_dims:
+        new_shape = array.shape + (1,) * (k-array.ndim)
+    else:
+        new_shape = (1,) * (k-array.ndim) + array.shape
 
     return array.reshape(new_shape)
 
