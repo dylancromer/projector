@@ -20,7 +20,7 @@ def describe_esd():
 
     def it_can_handle_larger_shapes():
         radii = np.linspace(0.1, 10, 10)
-        rho_func = lambda r: projector.mathutils.atleast_kd(1/r, r.ndim + 1, append_dims=False) * np.random.random_sample((3,) + r.shape)
+        rho_func = lambda r: projector.mathutils.atleast_kd(1/r, r.ndim + 3) * np.random.random_sample(r.shape + (3, 4, 5))
         esds = projector.esd(radii, rho_func)
 
         assert not np.any(np.isnan(esds))
