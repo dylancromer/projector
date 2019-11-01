@@ -3,6 +3,9 @@ import scipy.integrate as integrate
 import projector.mathutils as mathutils
 
 
+MIN_INTEGRATION_RADIUS = 1e-6
+
+
 def _first_term_integrand_func(xs, radii, density_func):
     rhos = density_func(xs)
     postfactor = xs**2 / mathutils.atleast_kd(radii, xs.ndim)**2
@@ -19,7 +22,7 @@ def _second_term_integrand_func(thetas, radii, density_func):
 
 
 def esd(radii, density_func, num_points=200):
-    xs = np.stack(tuple(np.linspace(1e-6, radius, num_points) for radius in radii))
+    xs = np.stack(tuple(np.linspace(MIN_INTEGRATION_RADIUS, radius, num_points) for radius in radii))
     first_term_integrand = _first_term_integrand_func(xs, radii, density_func)
 
     dxs = mathutils.atleast_kd(np.gradient(xs, axis=1), first_term_integrand.ndim)
