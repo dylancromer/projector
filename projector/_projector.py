@@ -21,7 +21,7 @@ def _second_term_integrand_func(thetas, radii, density_func):
     return 4 * radii * rhos / (4*np.sin(thetas) + 3 - np.cos(2*thetas))
 
 
-def esd(radii, density_func, num_points=200):
+def esd(radii, density_func, num_points=120):
     xs = np.stack(tuple(np.linspace(MIN_INTEGRATION_RADIUS, radius, num_points) for radius in radii))
     first_term_integrand = _first_term_integrand_func(xs, radii, density_func)
 
