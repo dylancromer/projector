@@ -34,3 +34,27 @@ def esd(radii, density_func, num_points=120):
     second_term = mathutils.trapz_(second_term_integrand, axis=1, dx=dthetas)
 
     return first_term - second_term
+
+
+def esd_quad(radii, density_func):
+    dens_shape = density_func(radii).shape
+
+    rflats = radii.flatten()
+    first_term_integral = np.array([integrate.quad_vec(
+        lambda x: _first_term_integrand_func(np.array([x]), rflats[i:i+1], density_func),
+        0,
+        rflats[i],
+    ) for i in range(radii.size)])
+
+    first_term_errors = first_term_integral[:, 1]
+    first_term = np.concatenate(first_term_integral[:, 0]).reshape(dens_shape)
+
+    second_term, second_term_errors = integrate.quad_vec(
+        lambda theta: _second_term_integrand_func(np.array([theta]), radii, density_func),
+        0,
+        np.pi/2,
+    )
+
+    second_term = second_term.reshape(dens_shape)
+
+    return first_term - second_term
