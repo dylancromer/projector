@@ -35,6 +35,13 @@ def describe_esd_quad():
 
         assert np.allclose(esds, np.zeros(radii.shape), atol=1e-3)
 
+    def it_can_handle_a_constant_in_2d():
+        radii = np.linspace(0.1, 10, 2)
+        rho_func = lambda r: np.ones(r.shape + (4,))
+        esds = projector.esd_quad(radii, rho_func)
+
+        assert np.allclose(esds, np.zeros(radii.shape + (4,)))
+
     def it_projects_a_simple_power_law_correctly():
         radii = np.linspace(0.1, 10, 10)
         rho_func = lambda r: 1/r

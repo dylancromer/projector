@@ -42,7 +42,7 @@ def esd_quad(radii, density_func):
     rflats = radii.flatten()
     first_term_integral = np.array([integrate.quad_vec(
         lambda x: _first_term_integrand_func(np.array([x]), rflats[i:i+1], density_func),
-        0,
+        MIN_INTEGRATION_RADIUS,
         rflats[i],
     ) for i in range(radii.size)])
 
