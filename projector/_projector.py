@@ -36,25 +36,44 @@ def esd(radii, density_func, num_points=120):
     return first_term - second_term
 
 
-def esd_quad(radii, density_func):
-    dens_shape = density_func(radii).shape
+def _check_errors_ok(error):
+    try:
+        max_error = error.max()
+    except AttributeError:
+        max_error = error
+    if max_error > 1e-2:
+        raise LargeQuadratureErrorsException(
+            f'Maximum quadrature error ({round(max_error, 2)}) is very large and indicates a problem',
+        )
 
+
+def _integrate_first_term_quad(radii, density_func):
     rflats = radii.flatten()
     first_term_integral = np.array([integrate.quad_vec(
         lambda x: _first_term_integrand_func(np.array([x]), rflats[i:i+1], density_func),
         MIN_INTEGRATION_RADIUS,
         rflats[i],
     ) for i in range(radii.size)])
+    _check_errors_ok(first_term_integral[:, 1])
+    return np.concatenate(first_term_integral[:, 0])
 
-    first_term_errors = first_term_integral[:, 1]
-    first_term = np.concatenate(first_term_integral[:, 0]).reshape(dens_shape)
 
+def _integrate_second_term_quad(radii, density_func):
     second_term, second_term_errors = integrate.quad_vec(
         lambda theta: _second_term_integrand_func(np.array([theta]), radii, density_func),
         0,
         np.pi/2,
     )
+    _check_errors_ok(second_term_errors)
+    return second_term
 
-    second_term = second_term.reshape(dens_shape)
 
+def esd_quad(radii, density_func):
+    dens_shape = density_func(radii).shape
+    first_term = _integrate_first_term_quad(radii, density_func).reshape(dens_shape)
+    second_term = _integrate_second_term_quad(radii, density_func).reshape(dens_shape)
     return first_term - second_term
+
+
+class LargeQuadratureErrorsException(Exception):
+    pass

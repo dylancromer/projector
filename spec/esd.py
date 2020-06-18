@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import projector
 
@@ -55,3 +56,9 @@ def describe_esd_quad():
         esds = projector.esd_quad(radii, rho_func)
 
         assert np.allclose(esds, np.ones(radii.shape + 3*(1,)), rtol=1e-4)
+
+    def it_complains_when_the_quad_error_gets_big_in_the_first_term():
+        radii = np.linspace(0.1, 10, 10)
+        rho_func = lambda r: np.ones(r.shape) * 1e12
+        with pytest.raises(projector.LargeQuadratureErrorsException):
+            projector.esd_quad(radii, rho_func)
