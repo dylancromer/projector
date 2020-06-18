@@ -4,6 +4,7 @@ import projector.mathutils as mathutils
 
 
 MIN_INTEGRATION_RADIUS = 1e-6
+MAX_ERROR_TOLERANCE = 10
 
 
 def _first_term_integrand_func(xs, radii, density_func):
@@ -41,7 +42,7 @@ def _check_errors_ok(error):
         max_error = error.max()
     except AttributeError:
         max_error = error
-    if max_error > 1e-2:
+    if max_error > MAX_ERROR_TOLERANCE:
         raise LargeQuadratureErrorsException(
             f'Maximum quadrature error ({round(max_error, 2)}) is very large and indicates a problem',
         )
