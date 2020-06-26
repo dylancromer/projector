@@ -26,6 +26,22 @@ def describe_esd():
 
         assert not np.any(np.isnan(esds))
 
+    def it_projects_an_inverse_square_law_correctly():
+        radii = np.linspace(0.1, 10, 30)
+        rho_func = lambda r: 1/r**2
+        esds = projector.esd(radii, rho_func)
+
+        assert np.allclose(esds, np.pi/radii, rtol=1e-4)
+
+    def it_projects_a_gaussian_correctly():
+        radii = np.logspace(-2, 1, 30)
+        rho_func = lambda r: np.exp(-r**2 / 2)
+        esds = projector.esd(radii, rho_func, num_points=300)
+
+        pref = np.sqrt(2 * np.pi)
+        true = pref * (2/radii**2 - np.exp(-radii**2/2) * (1 + 2/radii**2))
+        assert np.allclose(esds, true, rtol=1e-2)
+
 
 def describe_esd_quad():
 
@@ -49,6 +65,13 @@ def describe_esd_quad():
         esds = projector.esd_quad(radii, rho_func)
 
         assert np.allclose(esds, np.ones(radii.shape), rtol=1e-4)
+
+    def it_projects_an_inverse_square_law_correctly():
+        radii = np.linspace(0.1, 10, 30)
+        rho_func = lambda r: 1/r**2
+        esds = projector.esd_quad(radii, rho_func)
+
+        assert np.allclose(esds, np.pi/radii, rtol=1e-4)
 
     def it_can_handle_larger_shapes():
         radii = np.linspace(0.1, 10, 10)
