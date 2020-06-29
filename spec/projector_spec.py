@@ -3,6 +3,23 @@ import numpy as np
 import projector
 
 
+def describe_sd():
+
+    def it_projects_an_inverse_square_law_correctly():
+        radii = np.linspace(0.1, 10, 30)
+        rho_func = lambda r: 1/r**2
+        sds = projector.sd(radii, rho_func)
+
+        assert np.allclose(sds, np.pi/radii, rtol=1e-4)
+
+    def it_can_handle_larger_shapes():
+        radii = np.linspace(0.1, 10, 10)
+        rho_func = lambda r: projector.mathutils.atleast_kd(1/r, r.ndim + 3) * np.random.random_sample(r.shape + (3, 4, 5))
+        sds = projector.sd(radii, rho_func)
+
+        assert not np.any(np.isnan(sds))
+
+
 def describe_esd():
 
     def it_projects_a_constant_density_correctly():
