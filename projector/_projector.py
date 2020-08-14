@@ -4,6 +4,7 @@ import projector.mathutils as mathutils
 
 
 MIN_INTEGRATION_RADIUS = 1e-6
+MAX_INTEGRATION_RADIUS = 1e4
 MAX_ERROR_TOLERANCE = 10
 
 
@@ -35,6 +36,21 @@ def sd(radii, density_func, num_points=120):
     dthetas = np.gradient(thetas, axis=0)
     integrand = _sd_integrand_func(thetas, radii, density_func)
     return mathutils.trapz_(integrand, axis=1, dx=dthetas)
+
+
+def _sd_alt_integrand_func(ells, radii, density_func):
+    density_arg = np.sqrt(radii[:, None]**2 + ells[None, :]**2)
+    rhos = density_func(density_arg)
+    radii = mathutils.atleast_kd(radii[:, None], rhos.ndim)
+    ells = mathutils.atleast_kd(ells[None, :], rhos.ndim)
+    return 2*rhos
+
+
+def sd_alt(radii, density_func, num_points=120):
+    ells = np.geomspace(MIN_INTEGRATION_RADIUS, MAX_INTEGRATION_RADIUS, num_points)
+    d_ells = np.gradient(ells, axis=0)
+    integrand = _sd_alt_integrand_func(ells, radii, density_func)
+    return mathutils.trapz_(integrand, axis=1, dx=d_ells)
 
 
 def _esd_first_term_integrand_func(xs, radii, density_func):
