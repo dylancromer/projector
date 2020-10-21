@@ -63,32 +63,36 @@ def sd_alt(radii, density_func, num_points=120, radial_axis_to_broadcast=None):
     return mathutils.trapz_(integrand, axis=1, dx=d_ells)
 
 
-def _esd_first_term_integrand_func(xs, radii, density_func):
+def _esd_first_term_integrand_func(xs, radii, density_func, radial_axis_to_broadcast):
     rhos = density_func(xs)
-    postfactor = xs**2 / mathutils.atleast_kd(radii, xs.ndim)**2
+    radii_ = radii
+    if radial_axis_to_broadcast is not None:
+        radii_ = np.moveaxis(radii_, radial_axis_to_broadcast, radii_.ndim-1)
+    postfactor = xs**2 / mathutils.atleast_kd(radii_, xs.ndim, append_dims=False)**2
     postfactor = mathutils.atleast_kd(postfactor, rhos.ndim)
     return 4 * rhos * postfactor
 
 
 def _esd_second_term_integrand_func(thetas, radii, density_func):
-    density_arg = radii[:, None]/np.cos(thetas[None, :])
+    thetas_ = mathutils.atleast_kd(thetas, radii.ndim+1)
+    density_arg = radii[None, ...]/np.cos(thetas_)
     rhos = density_func(density_arg)
-    radii = mathutils.atleast_kd(radii[:, None], rhos.ndim)
-    thetas = mathutils.atleast_kd(thetas[None, :], rhos.ndim)
+    radii = mathutils.atleast_kd(radii[None, ...], rhos.ndim)
+    thetas = mathutils.atleast_kd(thetas_, rhos.ndim)
     return 4 * radii * rhos / (4*np.sin(thetas) + 3 - np.cos(2*thetas))
 
 
-def esd(radii, density_func, num_points=120):
-    xs = np.stack(tuple(np.linspace(MIN_INTEGRATION_RADIUS, radius, num_points) for radius in radii))
-    first_term_integrand = _esd_first_term_integrand_func(xs, radii, density_func)
+def esd(radii, density_func, num_points=120, radial_axis_to_broadcast=None):
+    xs = np.linspace(MIN_INTEGRATION_RADIUS, radii, num_points)
+    first_term_integrand = _esd_first_term_integrand_func(xs, radii, density_func, radial_axis_to_broadcast)
 
-    dxs = mathutils.atleast_kd(np.gradient(xs, axis=1), first_term_integrand.ndim)
-    first_term = mathutils.trapz_(first_term_integrand, axis=1, dx=dxs)
+    dxs = mathutils.atleast_kd(np.gradient(xs, axis=0), first_term_integrand.ndim)
+    first_term = mathutils.trapz_(first_term_integrand, axis=0, dx=dxs)
 
     thetas = np.linspace(0, np.pi/2, num_points)
     dthetas = np.gradient(thetas, axis=0)
     second_term_integrand = _esd_second_term_integrand_func(thetas, radii, density_func)
-    second_term = mathutils.trapz_(second_term_integrand, axis=1, dx=dthetas)
+    second_term = mathutils.trapz_(second_term_integrand, axis=0, dx=dthetas)
 
     return first_term - second_term
 
@@ -97,7 +101,7 @@ def _integrate_esd_first_term_quad(radii, density_func):
     rflats = radii.flatten()
     first_term_integral = np.array(
         [integrate.quad_vec(
-            lambda x: _esd_first_term_integrand_func(np.array([x]), rflats[i:i+1], density_func),
+            lambda x: _esd_first_term_integrand_func(np.array([x]), rflats[i:i+1], density_func, radial_axis_to_broadcast=None),
             MIN_INTEGRATION_RADIUS,
             rflats[i],
         ) for i in range(radii.size)],

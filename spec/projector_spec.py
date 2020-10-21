@@ -106,6 +106,21 @@ def describe_esd():
         true = pref * (2/radii**2 - np.exp(-radii**2/2) * (1 + 2/radii**2))
         assert np.allclose(esds, true, rtol=1e-2)
 
+    def it_can_allow_radii_that_are_functions_of_other_parameters():
+        def rho_func(r, z):
+            z_ = projector.mathutils.atleast_kd(z, r.ndim, append_dims=False)
+            return z_/r**2
+
+        zs = np.linspace(1, 2, 3)
+        rs = np.array([
+            np.linspace(i, i+1, 10) for i in range(1, zs.size+1)
+        ]).T
+        sds = projector.esd(rs, lambda r: rho_func(r, zs), radial_axis_to_broadcast=1)
+
+        zs = projector.mathutils.atleast_kd(zs, rs.ndim, append_dims=False)
+
+        assert np.allclose(sds, zs * np.pi/rs, rtol=1e-4)
+
 
 def describe_esd_quad():
 
