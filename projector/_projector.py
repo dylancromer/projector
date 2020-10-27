@@ -122,10 +122,10 @@ class ExcessSurfaceDensity:
     def _esd_first_term_integrand_func(self, xs):
         rhos = self.density_func(xs)
         radii_ = self.radii
-        if self.radial_axis_to_broadcast is not None:
-            radii_ = np.moveaxis(radii_, self.radial_axis_to_broadcast, self.radii.ndim-1)
-        postfactor = xs**2 / mathutils.atleast_kd(radii_, xs.ndim, append_dims=False)**2
+        postfactor = xs**2 / mathutils.atleast_kd(self.radii, xs.ndim, append_dims=False)**2
         postfactor = mathutils.atleast_kd(postfactor, rhos.ndim)
+        if self.radial_axis_to_broadcast is not None:
+            postfactor = np.moveaxis(postfactor, self.radial_axis_to_broadcast+1, self.density_axis)
         return 4 * rhos * postfactor
 
     def _esd_second_term_integrand_func(self, thetas):
@@ -133,14 +133,18 @@ class ExcessSurfaceDensity:
         density_arg = self.radii[None, ...]/np.cos(thetas_)
         rhos = self.density_func(density_arg)
         radii = mathutils.atleast_kd(self.radii[None, ...], rhos.ndim)
-        thetas = mathutils.atleast_kd(thetas_, rhos.ndim)
-        return 4 * radii * rhos / (4*np.sin(thetas) + 3 - np.cos(2*thetas))
+        if self.radial_axis_to_broadcast is not None:
+            radii = np.moveaxis(radii, self.radial_axis_to_broadcast+1, self.density_axis)
+        thetas__ = mathutils.atleast_kd(thetas_, rhos.ndim)
+        return 4 * radii * rhos / (4*np.sin(thetas__) + 3 - np.cos(2*thetas__))
 
     def esd(self):
         xs = np.linspace(MIN_INTEGRATION_RADIUS, self.radii, self.num_points)
         first_term_integrand = self._esd_first_term_integrand_func(xs)
 
         dxs = mathutils.atleast_kd(np.gradient(xs, axis=0), first_term_integrand.ndim)
+        if self.radial_axis_to_broadcast is not None:
+            dxs = np.moveaxis(dxs, self.radial_axis_to_broadcast+1, self.density_axis)
         first_term = mathutils.trapz_(first_term_integrand, axis=0, dx=dxs)
 
         thetas = np.linspace(0, np.pi/2, self.num_points)
